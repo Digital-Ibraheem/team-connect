@@ -1,26 +1,24 @@
-import Link from "next/link";
+import Link from 'next/link';
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-gray-800 text-white h-screen p-6">
-      <h2 className="text-lg font-bold mb-4">Menu</h2>
-      <ul>
-        <li className="mb-2">
-          <Link href="/dashboard">
-            <span className="block p-2 hover:bg-gray-700 rounded">Dashboard</span>
+    <aside className="w-64 border-r border-gray-200 min-h-screen bg-white">
+      <div className="p-4">
+        <nav className="space-y-1">
+          <Link
+            href="/projects"
+            className="block px-4 py-2 text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-md font-medium"
+          >
+            Projects
           </Link>
-        </li>
-        <li className="mb-2">
-          <Link href="/projects">
-            <span className="block p-2 hover:bg-gray-700 rounded">Projects</span>
+          <Link
+            href="/projects/new"
+            className="block px-4 py-2 text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-md font-medium"
+          >
+            Create Project
           </Link>
-        </li>
-        <li className="mb-2">
-          <Link href="/profile">
-            <span className="block p-2 hover:bg-gray-700 rounded">Profile</span>
-          </Link>
-        </li>
-      </ul>
+        </nav>
+      </div>
     </aside>
   );
 }
