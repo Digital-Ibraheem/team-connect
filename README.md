@@ -229,7 +229,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 ### Backend Setup
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Digital-Ibraheem/team-connect
 cd backend
 ```
 
