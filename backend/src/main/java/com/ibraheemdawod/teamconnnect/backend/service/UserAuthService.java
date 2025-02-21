@@ -40,23 +40,27 @@ public class UserAuthService implements UserDetailsService {
     public Map<String, String> authenticateUser(String email, String password) {
         Optional<User> user = userRepository.findByEmail(email);
 
-        if (user.isPresent() && passwordEncoder.matches(password, user.get().getPassword())) {
-            // Generate JWT Token
-            String token = jwtUtil.generateToken(user.get());
-
-            // Return token along with user info
-            Map<String, String> response = new HashMap<>();
-            response.put("token", token);
-            response.put("userId", user.get().getId().toString());
-            response.put("email", user.get().getEmail());
-
-            return response;
+        if (user.isEmpty() || !passwordEncoder.matches(password, user.get().getPassword())) {
+            throw new RuntimeException("Invalid email or password");
         }
 
-        return null; // Authentication failed
+        // Generate JWT Token
+        String token = jwtUtil.generateToken(user.get());
+
+        // Return token along with user info
+        Map<String, String> response = new HashMap<>();
+        response.put("token", token);
+        response.put("userId", user.get().getId().toString());
+        response.put("email", user.get().getEmail());
+
+        return response;
     }
 
     public Map<String, String> registerUser(User user) {
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new RuntimeException("This email is already in use. Please try a different one.");
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
 

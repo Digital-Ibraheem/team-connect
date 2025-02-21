@@ -1,63 +1,78 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { mockProjects } from '@/lib/mockData';
-import { use } from 'react';
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
+import axios from "axios";
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default function EditProjectPage({ params }: PageProps) {
-  const { id } = use(params);
+export default function EditProjectPage() {
+  const params = useParams();
+  const [projectId, setProjectId] = useState<string | null>(null);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    title: '',
-    description: ''
+    name: "",
+    description: "",
   });
 
   useEffect(() => {
+    const fetchParams = async () => {
+      const resolvedParams = await params;
+      setProjectId(resolvedParams.id);
+    };
+    fetchParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (!projectId) return;
+
     const fetchProject = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
-        const project = mockProjects.find(p => p.id === id);
-        
-        if (!project) {
-          setError('Project not found');
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("You must be logged in to edit a project.");
           return;
         }
 
+        const response = await axios.get(`http://localhost:8080/api/projects/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
         setFormData({
-          title: project.title,
-          description: project.description
+          name: response.data.name,
+          description: response.data.description,
         });
       } catch (err) {
-        setError('Failed to load project');
+        setError("Project not found");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchProject();
-  }, [id]);
+  }, [projectId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError('');
+    setError("");
 
     try {
-      // TODO: Implement project update logic
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      console.log('Update project:', id, formData);
-      router.push('/projects');
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("You must be logged in to update a project.");
+        return;
+      }
+
+      await axios.put(`http://localhost:8080/api/projects/${projectId}`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      router.push("/projects");
     } catch (err) {
-      setError('Failed to update project. Please try again.');
+      setError("Failed to update project. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -77,16 +92,15 @@ export default function EditProjectPage({ params }: PageProps) {
     );
   }
 
-  if (error === 'Project not found') {
+  if (error === "Project not found") {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="bg-white p-8 border border-gray-200 rounded-lg shadow-sm text-center">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Project Not Found</h2>
-          <p className="text-gray-600 mb-6">The project you're looking for doesn't exist or has been removed.</p>
-          <Link
-            href="/projects"
-            className="text-blue-600 hover:text-blue-700 font-medium"
-          >
+          <p className="text-gray-600 mb-6">
+            The project you're looking for doesn't exist or has been removed.
+          </p>
+          <Link href="/projects" className="text-blue-600 hover:text-blue-700 font-medium">
             Back to Projects
           </Link>
         </div>
@@ -98,10 +112,7 @@ export default function EditProjectPage({ params }: PageProps) {
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Edit Project</h1>
-        <Link
-          href="/projects"
-          className="text-gray-600 hover:text-gray-900 font-medium"
-        >
+        <Link href="/projects" className="text-gray-600 hover:text-gray-900 font-medium">
           Back to Projects
         </Link>
       </div>
@@ -115,22 +126,18 @@ export default function EditProjectPage({ params }: PageProps) {
       <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Project Title
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Project Title</label>
             <input
               type="text"
               required
-              value={formData.title}
+              value={formData.name}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               disabled={isSubmitting}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
               required
               rows={4}
@@ -146,7 +153,7 @@ export default function EditProjectPage({ params }: PageProps) {
               disabled={isSubmitting}
               className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 font-medium transition-colors duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

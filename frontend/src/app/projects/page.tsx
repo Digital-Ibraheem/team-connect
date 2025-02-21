@@ -1,8 +1,33 @@
-import { mockProjects } from '@/lib/mockData';
-import Link from 'next/link';
-import ProjectCard from '@/components/ProjectCard';
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import axios from "axios";
+import ProjectCard from "@/components/ProjectCard";
 
 export default function ProjectsPage() {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/projects");
+        setProjects(response.data);
+      } catch (err) {
+        setError("Failed to load projects");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  if (loading) return <p>Loading projects...</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
@@ -15,7 +40,7 @@ export default function ProjectsPage() {
         </Link>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {mockProjects.map((project) => (
+        {projects.map((project: any) => (
           <ProjectCard key={project.id} project={project} />
         ))}
       </div>
