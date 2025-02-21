@@ -1,11 +1,13 @@
 package com.ibraheemdawod.teamconnnect.backend.controller;
 
 import com.ibraheemdawod.teamconnnect.backend.model.User;
+import com.ibraheemdawod.teamconnnect.backend.service.UserAuthService;
 import com.ibraheemdawod.teamconnnect.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -15,8 +17,11 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private UserAuthService userAuthService;
+
     @GetMapping
-    public List<User> getAllUsers() {
+    public Iterable<User> getAllUsers() {
         return userService.getAllUsers();
     }
 
@@ -25,9 +30,14 @@ public class UserController {
         return userService.getUserById(id);
     }
 
-    @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    @PostMapping("/register")
+    public Map<String, String> registerUser(@RequestBody User user) {
+        return userAuthService.registerUser(user);
+    }
+
+    @PostMapping("/login")
+    public Map<String, String> loginUser(@RequestBody User user) {
+        return userAuthService.authenticateUser(user.getEmail(), user.getPassword());
     }
 
     @DeleteMapping("/{id}")
