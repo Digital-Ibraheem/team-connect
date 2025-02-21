@@ -2,27 +2,33 @@ package com.ibraheemdawod.teamconnnect.backend.controller;
 
 import com.ibraheemdawod.teamconnnect.backend.model.Project;
 import com.ibraheemdawod.teamconnnect.backend.service.ProjectService;
+import com.ibraheemdawod.teamconnnect.backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("api/projects")
+@RequestMapping("/api/projects")
 public class ProjectController {
 
     @Autowired
     private ProjectService projectService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @GetMapping
     public List<Project> getAllProjects() {
-        return projectService.getAllProjects();
+        return projectService.getAllProjects(); // Public: anyone can view projects
     }
 
-    @GetMapping("/user/{userId}")
-    public List<Project> getUserProjects(@PathVariable Long userId) {
-        return projectService.getUserProjects(userId);
+    @GetMapping("/my-projects")
+    public List<Project> getUserProjects(Authentication authentication) {
+        String email = authentication.getName(); // Get the authenticated user's email
+        return projectService.getUserProjectsByEmail(email);
     }
 
     @GetMapping("/{id}")
@@ -30,18 +36,21 @@ public class ProjectController {
         return projectService.getProjectById(id);
     }
 
-    @PostMapping("/create/{userId}")
-    public Project createProject(@RequestBody Project project, @PathVariable Long userId) {
-        return projectService.createProject(project, userId);
+    @PostMapping("/create")
+    public Project createProject(@RequestBody Project project, Authentication authentication) {
+        String email = authentication.getName(); // Get authenticated user's email
+        return projectService.createProject(project, email);
     }
 
-    @PutMapping("/update/{projectId}/{userId}")
-    public Project updateProject(@RequestBody Project updatedProject, @PathVariable Long projectId, @PathVariable Long userId) {
-        return projectService.updateProject(projectId, updatedProject, userId);
+    @PutMapping("/update/{projectId}")
+    public Project updateProject(@PathVariable Long projectId, @RequestBody Project updatedProject, Authentication authentication) {
+        String email = authentication.getName();
+        return projectService.updateProject(projectId, updatedProject, email);
     }
 
-    @DeleteMapping("/delete/{projectId}/{userId}")
-    public void deleteProject(@PathVariable Long projectId, @PathVariable Long userId) {
-        projectService.deleteProject(projectId, userId);
+    @DeleteMapping("/delete/{projectId}")
+    public void deleteProject(@PathVariable Long projectId, Authentication authentication) {
+        String email = authentication.getName();
+        projectService.deleteProject(projectId, email);
     }
 }

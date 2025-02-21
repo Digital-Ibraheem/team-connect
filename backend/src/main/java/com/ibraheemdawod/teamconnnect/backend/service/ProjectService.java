@@ -5,11 +5,8 @@ import com.ibraheemdawod.teamconnnect.backend.model.User;
 import com.ibraheemdawod.teamconnnect.backend.repository.ProjectRepository;
 import com.ibraheemdawod.teamconnnect.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,21 +20,21 @@ public class ProjectService {
     private UserRepository userRepository;
 
     public List<Project> getAllProjects() {
-        return projectRepository.findAll();
+        return projectRepository.findAll(); // Public projects
     }
 
-    public List<Project> getUserProjects(Long userId) {
-        return projectRepository.findByOwnerId(userId);
+    public List<Project> getUserProjectsByEmail(String email) {
+        Optional<User> user = userRepository.findByEmail(email);
+        return user.map(value -> projectRepository.findByOwnerId(value.getId())).orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
     public Optional<Project> getProjectById(Long id) {
         return projectRepository.findById(id);
     }
 
-    public Project createProject(Project project, Long userId) {
-        Optional<User> user = userRepository.findById(userId);
-
-        if(user.isPresent()) {
+    public Project createProject(Project project, String email) {
+        Optional<User> user = userRepository.findByEmail(email);
+        if (user.isPresent()) {
             project.setOwner(user.get());
             return projectRepository.save(project);
         } else {
@@ -45,32 +42,30 @@ public class ProjectService {
         }
     }
 
-    public Project updateProject(Long projectId, Project updatedProject, Long userId) {
+    public Project updateProject(Long projectId, Project updatedProject, String email) {
         Optional<Project> existingProject = projectRepository.findById(projectId);
-
         if (existingProject.isPresent()) {
             Project project = existingProject.get();
-
-            if (!project.getOwner().getId().equals(userId)) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized: You are not the owner of this project");
+            if (!project.getOwner().getEmail().equals(email)) {
+                throw new IllegalArgumentException("Unauthorized to update this project");
             }
-
             project.setName(updatedProject.getName());
             project.setDescription(updatedProject.getDescription());
             return projectRepository.save(project);
         } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found");
+            throw new IllegalArgumentException("Project not found");
         }
-
     }
 
-    public void deleteProject(Long projectId, Long userId) {
+    public void deleteProject(Long projectId, String email) {
         Optional<Project> project = projectRepository.findById(projectId);
-
-        if(project.isPresent() && project.get().getOwner().getId().equals(userId)) {
+        if (project.isPresent()) {
+            if (!project.get().getOwner().getEmail().equals(email)) {
+                throw new IllegalArgumentException("Unauthorized to delete this project");
+            }
             projectRepository.deleteById(projectId);
         } else {
-            throw new IllegalArgumentException("Unauthorized or Project not found");
+            throw new IllegalArgumentException("Project not found");
         }
     }
 }
